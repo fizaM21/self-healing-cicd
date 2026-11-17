@@ -1,0 +1,21 @@
+# Render Blueprint: backend (Docker) + managed PostgreSQL.
+services:
+  - type: web
+    name: selfheal-backend
+    runtime: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    autoDeployTrigger: "off"          # deploys come from .github/workflows/deploy.yml
+    envVars:
+      - { key: DATABASE_URL, fromDatabase: { name: selfheal-db, property: connectionString } }
+      - { key: API_KEY, generateValue: true }
+      - { key: GITHUB_WEBHOOK_SECRET, generateValue: true }
+      - { key: SANDBOX_MODE, value: local }   # Render has no Docker-in-Docker; see docs/SECURITY.md
+      - { key: LLM_PROVIDER, value: groq }
+      - { key: GROQ_API_KEY, sync: false }
+      - { key: GITHUB_TOKEN, sync: false }
+      - { key: CORS_ORIGINS, sync: false }
+databases:
+  - name: selfheal-db
+    plan: free

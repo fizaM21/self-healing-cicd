@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: selfheal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-selfheal}
+      POSTGRES_DB: selfheal
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U selfheal"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    env_file: [backend/.env]
+    environment:
+      DATABASE_URL: postgresql://selfheal:${POSTGRES_PASSWORD:-selfheal}@db:5432/selfheal
+      SANDBOX_MODE: ${SANDBOX_MODE:-local}   # use docker-compose.sandbox.yml for 'docker'
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ["8000:8000"]
+
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://backend:8000
+      BACKEND_API_KEY: ${API_KEY:?set API_KEY}
+      DASHBOARD_USER: ${DASHBOARD_USER:-admin}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?set DASHBOARD_PASSWORD}
+    depends_on: [backend]
+    ports: ["3000:3000"]
+
+volumes:
+  pgdata:
