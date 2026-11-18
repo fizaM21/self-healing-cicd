@@ -1,0 +1,19 @@
+# Backend: Render deploys from git; this triggers it only after CI passes on main.
+# Frontend: Vercel's GitHub integration deploys on push, nothing needed here.
+name: Deploy
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+permissions: {}
+
+jobs:
+  backend:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - env: { HOOK: "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" }
+        run: |
+          if [ -z "$HOOK" ]; then echo "RENDER_DEPLOY_HOOK_URL not set - skipping"; exit 0; fi
+          curl --fail -sS -X POST "$HOOK" >/dev/null && echo "deploy triggered"
