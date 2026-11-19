@@ -36,7 +36,13 @@ class Settings(BaseSettings):
     @classmethod
     def _fix_scheme(cls, v: str) -> str:
         # Render/Heroku hand out postgres:// but SQLAlchemy 2.x only accepts postgresql://
-        return "postgresql://" + v[len("postgres://"):] if v.startswith("postgres://") else v
+        if v.startswith("postgres://"):
+            v = "postgresql://" + v[len("postgres://"):]
+        # SQLAlchemy 2.1 picks the newer 'psycopg' driver for plain postgresql://.
+        # We ship psycopg2, so name it explicitly.
+        if v.startswith("postgresql://"):
+            v = "postgresql+psycopg2://" + v[len("postgresql://"):]
+        return v
 
 
 @lru_cache
