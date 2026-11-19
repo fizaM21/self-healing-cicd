@@ -82,5 +82,6 @@ def test_analyzer_falls_back_on_error():
 
 def test_postgres_url_is_normalised():
     from app.config import Settings
-    assert Settings(database_url="postgres://u:p@h/db").database_url == "postgresql://u:p@h/db"
+    assert Settings(database_url="postgres://u:p@h/db").database_url == "postgresql+psycopg2://u:p@h/db"
+    assert Settings(database_url="postgresql://u:p@h/db").database_url == "postgresql+psycopg2://u:p@h/db"
     assert Settings(database_url="sqlite:///x.db").database_url == "sqlite:///x.db"
