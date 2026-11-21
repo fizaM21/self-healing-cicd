@@ -6,7 +6,7 @@ from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Re
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import create_engine, func, select, update
+from sqlalchemy import create_engine, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -33,6 +33,10 @@ def make_deps(settings: Settings) -> Deps:
             kw["poolclass"] = StaticPool
     engine = create_engine(settings.database_url, pool_pre_ping=True, **kw)
     Base.metadata.create_all(engine)
+    if engine.dialect.name == "postgresql":
+        # create_all never alters existing tables. GitHub run ids exceed 32 bits.
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE incidents ALTER COLUMN run_id TYPE BIGINT"))
     return Deps(settings, sessionmaker(engine, expire_on_commit=False),
                 GitHubClient(settings.github_token, settings.max_log_chars),
                 make_analyzer(settings), Sandbox(settings))
