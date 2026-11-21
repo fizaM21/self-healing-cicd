@@ -4,7 +4,9 @@ import re
 from dataclasses import dataclass, field
 
 import httpx
+
 from .security import redact
+
 log = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are a CI/CD failure repair engineer.
@@ -117,7 +119,12 @@ class Analyzer:
         try:
             return self.primary.analyze(ctx)
         except Exception as exc:  # network, quota, bad JSON...
-            log.warning("LLM provider %s failed (%s); using heuristics", self.primary.name, type(exc).__name__)
+            detail = ""
+            resp = getattr(exc, "response", None)
+            if resp is not None:
+                detail = f" status={resp.status_code} body={redact(resp.text[:300])}"
+            log.warning("LLM provider %s failed (%s)%s; using heuristics",
+                        self.primary.name, type(exc).__name__, detail)
             return self.fallback.analyze(ctx)
 
 
