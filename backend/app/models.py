@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -18,7 +18,7 @@ class Incident(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     repo: Mapped[str] = mapped_column(String(200), index=True)
-    run_id: Mapped[int] = mapped_column(Integer)
+    run_id: Mapped[int] = mapped_column(BigInteger)
     workflow: Mapped[str] = mapped_column(String(200), default="")
     branch: Mapped[str] = mapped_column(String(200), default="main")
     head_sha: Mapped[str] = mapped_column(String(64), default="")
