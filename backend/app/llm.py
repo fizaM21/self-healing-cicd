@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass, field
 
 import httpx
-
+from .security import redact
 log = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are a CI/CD failure repair engineer.
